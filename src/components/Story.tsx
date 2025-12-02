@@ -40,7 +40,7 @@ export const Story = () => {
         }} className="order-1 md:order-2 space-y-6">
             <div className="space-y-4">
               <span className="text-terracotta font-medium tracking-wide">הסיפור שלנו</span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-warm-brown">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl text-warm-brown font-sans">
                 נעים להכיר, בת-שבע
               </h2>
             </div>
