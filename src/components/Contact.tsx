@@ -66,7 +66,7 @@ export const Contact = () => {
               </a>
             </Button>
 
-            <p className="text-sm text-muted-foreground text-center pt-4">בת-שבע תשמח לענות לכל שאלה ולעזור לך להתאים את המתנה המושלמת</p>
+            <p className="text-sm text-muted-foreground text-center pt-4">נשמח לענות לכל שאלה ולעזור לך להתאים את המתנה המושלמת</p>
           </motion.div>
         </div>
       </div>
