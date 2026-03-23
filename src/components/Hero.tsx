@@ -38,7 +38,7 @@ export const Hero = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="w-16 h-px bg-terracotta"
+              className="w-16 h-px bg-terracotta mx-auto md:mx-0"
             />
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-warm-brown leading-tight">
@@ -61,7 +61,7 @@ export const Hero = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 pt-4"
+              className="flex flex-col sm:flex-row gap-4 pt-4 items-center md:items-start"
             >
               <Button
                 variant="hero"

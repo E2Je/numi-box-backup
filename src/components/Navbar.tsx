@@ -34,9 +34,12 @@ export const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) element.scrollIntoView({ behavior: "smooth" });
+    // Close menu first, scroll after animation completes
     setIsMobileMenuOpen(false);
+    setTimeout(() => {
+      const element = document.querySelector(href);
+      if (element) element.scrollIntoView({ behavior: "smooth" });
+    }, 320);
   };
 
   return (
@@ -50,6 +53,18 @@ export const Navbar = () => {
     >
       <nav className="container mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-20">
+
+          {/* Mobile Menu Button - order-first makes it appear on the RIGHT in RTL */}
+          <button
+            ref={hamburgerRef}
+            className="md:hidden p-2 text-foreground order-first"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "סגור תפריט" : "פתח תפריט"}
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
           {/* Logo */}
           <a href="#" className="flex items-center gap-2">
             <img
@@ -84,16 +99,6 @@ export const Navbar = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            ref={hamburgerRef}
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "סגור תפריט" : "פתח תפריט"}
-            aria-expanded={isMobileMenuOpen}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </nav>
 
@@ -105,7 +110,7 @@ export const Navbar = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-card/98 backdrop-blur-md border-t border-border"
+            className="md:hidden bg-card/98 backdrop-blur-md border-t border-border overflow-hidden"
           >
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
               {navLinks.map((link) => (
