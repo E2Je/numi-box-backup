@@ -28,7 +28,7 @@ export const FeaturedBox = () => {
         }} className="relative">
             <div className="absolute -inset-6 bg-gradient-to-br from-sage/20 via-lavender/20 to-blush/30 rounded-3xl blur-3xl" />
             <div className="relative overflow-hidden rounded-3xl shadow-elegant">
-              <img src={fullBoxImg} alt="מארז נומי שלווה בקופסא - המארז השלם" className="w-full object-cover aspect-[4/3]" />
+              <img src={fullBoxImg} alt="מארז נומי שלווה בקופסא - המארז השלם" className="w-full object-cover aspect-[4/3]" loading="lazy" />
               {/* Price Badge */}
               <div className="absolute top-6 left-6 bg-card/95 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-soft flex items-center gap-3">
                 <span className="text-2xl text-muted-foreground font-mono line-through">249₪</span>

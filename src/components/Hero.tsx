@@ -27,7 +27,7 @@ export const Hero = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 md:px-8 relative z-10">
-        <div className="max-w-2xl mr-auto md:mr-0 md:ml-auto">
+        <div className="max-w-2xl mx-auto md:mx-0 md:ml-auto text-center md:text-right">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}

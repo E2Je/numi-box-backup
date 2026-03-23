@@ -23,7 +23,7 @@ export const Story = () => {
         }} className="order-2 md:order-1">
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-br from-lavender/30 to-sage/20 rounded-3xl blur-2xl" />
-              <img src={numiProductsImg} alt="מוצרי נומי - שלווה בקופסא" className="relative rounded-2xl shadow-elegant w-full object-cover" />
+              <img src={numiProductsImg} alt="מוצרי נומי - שלווה בקופסא" className="relative rounded-2xl shadow-elegant w-full object-cover" loading="lazy" />
             </div>
           </motion.div>
 
