@@ -65,7 +65,6 @@ export const Products = () => {
           transition={{ duration: 0.6 }}
           className="text-center max-w-2xl mx-auto mb-16"
         >
-          <span className="text-terracotta font-medium tracking-wide">הקולקציה</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-warm-brown mt-4 mb-6">
             המוצרים שלנו:
           </h2>
