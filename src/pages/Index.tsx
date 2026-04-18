@@ -2,11 +2,11 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Story } from "@/components/Story";
 import { FeaturedBox } from "@/components/FeaturedBox";
+import { BreathingExercise } from "@/components/BreathingExercise";
 import { Products } from "@/components/Products";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { StickyWhatsApp } from "@/components/StickyWhatsApp";
-import { SpringBanner } from "@/components/SpringBanner";
 
 const Index = () => {
   return (
@@ -15,8 +15,8 @@ const Index = () => {
       <main>
         <Hero />
         <Story />
-        <SpringBanner />
         <FeaturedBox />
+        <BreathingExercise />
         <Products />
         <Contact />
       </main>
