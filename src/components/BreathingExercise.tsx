@@ -195,6 +195,11 @@ export const BreathingExercise = () => {
               <Button variant="hero" size="lg" onClick={startExercise}>
                 להתחיל
               </Button>
+
+              <p className="text-xs text-muted-foreground/60 pt-2">
+                התרגול מיועד למטרות רווחה כללית בלבד ואינו מהווה תחליף לייעוץ רפואי.
+                כל מי שמבצע את התרגיל עושה זאת על אחריותו בלבד.
+              </p>
             </motion.div>
           )}
 
