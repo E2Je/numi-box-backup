@@ -8,23 +8,33 @@ type Stage = "idle" | "active" | "done";
 const PHASE_SEQUENCE: Phase[] = ["inhale", "hold1", "exhale", "hold2"];
 const PHASE_DURATION = 4;
 
-// Each phase has 2 alternating messages shown every 2s inside the circle
-const PHASE_MESSAGES: Record<Phase, [string, string]> = {
-  inhale: ["שאפי לאט...", "דרך האף"],
-  hold1:  ["אחזיקי...",   "שמרי את השקט"],
-  exhale: ["נשפי לאט...", "דרך הפה"],
-  hold2:  ["נוחי...",     "תני לגוף להירגע"],
-};
-
-// Subtitle shown below the circle
 const PHASE_SUBTITLE: Record<Phase, string> = {
   inhale: "שאיפה",
-  hold1:  "עצירה",
+  hold1:  "שהייה",
   exhale: "נשיפה",
-  hold2:  "עצירה",
+  hold2:  "מנוחה",
 };
 
-// Circle scale per phase
+// Each phase gets a distinct color from the site palette
+const PHASE_COLORS: Record<Phase, { gradient: string; glow: string }> = {
+  inhale: {
+    gradient: "linear-gradient(135deg, hsl(270 35% 72%), hsl(270 28% 60%))",
+    glow:     "hsl(270 35% 72% / 0.5)",
+  },
+  hold1: {
+    gradient: "linear-gradient(135deg, hsl(20 42% 58%), hsl(15 38% 68%))",
+    glow:     "hsl(20 42% 58% / 0.5)",
+  },
+  exhale: {
+    gradient: "linear-gradient(135deg, hsl(135 28% 58%), hsl(135 22% 70%))",
+    glow:     "hsl(135 28% 58% / 0.45)",
+  },
+  hold2: {
+    gradient: "linear-gradient(135deg, hsl(35 38% 75%), hsl(25 32% 68%))",
+    glow:     "hsl(35 38% 75% / 0.5)",
+  },
+};
+
 const CIRCLE_SCALE: Record<Phase, number> = {
   inhale: 1.45,
   hold1:  1.45,
@@ -32,12 +42,63 @@ const CIRCLE_SCALE: Record<Phase, number> = {
   hold2:  0.85,
 };
 
-// Transition duration: animate only on inhale/exhale
 const TRANSITION_DURATION: Record<Phase, number> = {
   inhale: PHASE_DURATION - 0.3,
   hold1:  0.15,
   exhale: PHASE_DURATION - 0.3,
   hold2:  0.15,
+};
+
+// 10 texts per phase — one shown per full cycle (cycle 0–9, then wraps)
+const PHASE_TEXTS: Record<Phase, string[]> = {
+  inhale: [
+    "שאיפה עמוקה ורכה",
+    "תכניסי אוויר לאט פנימה",
+    "תני לבית החזה להתרחב",
+    "שאיפה נקייה של חיּוּת",
+    "תמלאי את הריאות בנחת",
+    "תני לבטן לעלות בעדינות",
+    "שאיפה איטית דרך האף",
+    "תכניסי רוגע פנימה",
+    "תני לאוויר למלא אותך",
+    "שאיפה של התחדשות",
+  ],
+  hold1: [
+    "פשוט להיות עם המלאות",
+    "להחזיק את השלווה בפנים",
+    "רגע של שקט מוחלט",
+    "גוף נינוח, ראש שקט",
+    "תני לשמן השלווה לעטוף אותך",
+    "שהייה רכה בתוך השקט",
+    "לנצור את הרגע הזה",
+    "להרגיש את הלב נרגע",
+    "יציבות ושלווה פנימית",
+    "את כאן, בזמן שלך",
+  ],
+  exhale: [
+    "שחררי הכל החוצה",
+    "תני לכתפיים לצנוח מטה",
+    "נשיפה ארוכה ומרפה",
+    "להוציא את כל המתח",
+    "להרפות את הלסת והפנים",
+    "לתת לגוף להפוך כבד",
+    "נשיפה איטית דרך הפה",
+    "שחררי את המחשבות",
+    "רפיון מלא של כל הגוף",
+    "להוציא את המאמץ החוצה",
+  ],
+  hold2: [
+    "מנוחה מוחלטת בריק",
+    "שקט לפני השאיפה הבאה",
+    "להתמסר לרגע של ריקנות",
+    "הגוף משחרר הכל",
+    "תחושת קלילות ורפיון",
+    "להישאר בשקט הפנימי",
+    "מנוחה עמוקה למערכת",
+    "חכי לרגע הבא בנחת",
+    "ריק שקט ומרגיע",
+    "להתכונן להתחלה חדשה",
+  ],
 };
 
 const TIMER_OPTIONS = [
@@ -55,15 +116,14 @@ export const BreathingExercise = () => {
   const [phaseTimeLeft,    setPhaseTimeLeft]    = useState(PHASE_DURATION);
   const [totalTimeLeft,    setTotalTimeLeft]    = useState(180);
   const [selectedDuration, setSelectedDuration] = useState(180);
-  // which of the 2 alternating messages to show (0 or 1)
-  const [msgSlot,          setMsgSlot]          = useState(0);
+  const [cycleIndex,       setCycleIndex]       = useState(0);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const reduceMotion = useReducedMotion();
 
   const currentPhase = PHASE_SEQUENCE[phaseIndex];
+  const cycleText    = PHASE_TEXTS[currentPhase][cycleIndex % 10];
 
-  // Main tick — runs only while active
   useEffect(() => {
     if (stage !== "active") return;
 
@@ -72,22 +132,20 @@ export const BreathingExercise = () => {
       setPhaseTimeLeft(prev => {
         const next = prev - 1;
         if (next <= 0) {
-          setPhaseIndex(i => (i + 1) % PHASE_SEQUENCE.length);
-          setMsgSlot(0);
+          setPhaseIndex(i => {
+            const nextPhase = (i + 1) % PHASE_SEQUENCE.length;
+            if (nextPhase === 0) setCycleIndex(c => c + 1);
+            return nextPhase;
+          });
           return PHASE_DURATION;
         }
-        // flip message slot at halfway point (2s)
-        if (next === Math.floor(PHASE_DURATION / 2)) setMsgSlot(1);
         return next;
       });
     }, 1000);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [stage]);
 
-  // Detect end of session
   useEffect(() => {
     if (stage === "active" && totalTimeLeft === 0) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -99,6 +157,7 @@ export const BreathingExercise = () => {
     setPhaseIndex(0);
     setPhaseTimeLeft(PHASE_DURATION);
     setTotalTimeLeft(selectedDuration);
+    setCycleIndex(0);
     setStage("active");
   };
 
@@ -109,15 +168,15 @@ export const BreathingExercise = () => {
 
   const resetExercise = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setStage("idle");
     setPhaseIndex(0);
     setPhaseTimeLeft(PHASE_DURATION);
-    setMsgSlot(0);
+    setCycleIndex(0);
+    setStage("idle");
   };
 
   return (
-    <section id="breathing" className="section-padding bg-lavender-soft/30">
-      <div className="container mx-auto px-4 md:px-8 max-w-xl text-center">
+    <section id="breathing" className="section-padding bg-cream/60">
+      <div className="container mx-auto px-4 md:px-8 max-w-2xl text-center">
         <AnimatePresence mode="wait">
 
           {/* ── IDLE ── */}
@@ -140,36 +199,70 @@ export const BreathingExercise = () => {
                   🌿
                 </motion.span>
                 <h2 className="text-3xl md:text-4xl font-serif text-warm-brown">
-                  רגע לנשום
+                  רגע של שקט לעצמך
                 </h2>
                 <div className="divider-elegant" />
               </div>
 
-              {/* Explanation */}
+              {/* What is box breathing */}
               <div className="space-y-4 text-right">
                 <p className="text-muted-foreground leading-relaxed">
-                  <strong className="text-warm-brown">נשימות קופסה</strong> — 4 שניות שאיפה,
-                  4 שניות עצירה, 4 שניות נשיפה, 4 שניות עצירה.
-                  הקצב הסדיר הזה מפעיל את מערכת העצבים הפאראסימפתטית, מאזן את רמות הקורטיזול
-                  ומשדר לגוף שהוא בטוח.
+                  נשימת קופסה היא הזמנה לעצור את רעשי הרקע ולהתחבר לקצב הפנימי שלך.
+                  זו טכניקה עוצמתית המאפשרת לגוף ולנפש להסתנכרן מחדש, להוריד את רמת המתח
+                  ולשפר את הריכוז.
                 </p>
+                <p className="text-warm-brown font-medium text-sm">למה זה טוב עבורך?</p>
+                <ul className="space-y-2">
+                  {[
+                    ["השקטת המחשבות", "הריכוז בספירה ובקצב משחרר עומס מנטלי."],
+                    ["איזון המערכת העצבית", "מעבר ממצב של מתח למצב של רגיעה עמוקה."],
+                    ["חיבור חושי", "הזדמנות לעצור הכל ולהרגיש את הגוף שלך כאן ועכשיו."],
+                  ].map(([title, desc]) => (
+                    <li key={title} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-terracotta mt-0.5 flex-shrink-0">✦</span>
+                      <span><strong className="text-warm-brown">{title}</strong> — {desc}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-                {/* Nose / mouth explanation */}
-                <div className="bg-card/60 rounded-2xl p-4 space-y-2 border border-border/40">
-                  <p className="text-warm-brown font-medium text-sm">כמה מילים לפני שמתחילים:</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    🌬️ <strong>שאיפה דרך האף</strong> — האף מסנן, מחמם ולחמה את האוויר.
-                    הנשימה דרכו מאטה את הקצב באופן טבעי ומפעילה את תגובת ה״הרגע״ של הגוף.
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    💨 <strong>נשיפה דרך הפה</strong> — משחררת את ה-CO₂ מהר יותר ומשדרת למוח
-                    שהסכנה עברה. זה מה שגורם לאותו תחושת שחרור אחרי נשיפה ארוכה.
-                  </p>
+              {/* Preparation */}
+              <div className="bg-card/60 rounded-2xl p-5 space-y-3 border border-border/40 text-right">
+                <p className="text-warm-brown font-medium">הכנה לתרגול</p>
+                <p className="text-sm text-muted-foreground">כדי להפיק את המקסימום מהרגע הזה:</p>
+                <ol className="space-y-2">
+                  {[
+                    "מרחי מעט משמן הרול Dream על פרקי הידיים ונשמי את הניחוח.",
+                    "רססי מתרסיס ה Good Mood בחלל החדר.",
+                    "הניחי את הטלפון במקום יציב מולך, בגובה העיניים.",
+                    "שבי בתנוחה נינוחה והתרכזי בעיגול שעל המסך — הוא יוביל אותך.",
+                    "טיפ של NUMI: אם יש לך כרית עיניים, מומלץ לבצע 5 סבבים מול המסך ולאחר מכן להניח את הכרית על העיניים ולהמשיך בנשימות עם העיגול הפנימי שלך.",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-terracotta font-medium flex-shrink-0">{i + 1}.</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {/* How to */}
+              <div className="space-y-3 text-right">
+                <p className="text-warm-brown font-medium">איך מבצעים?</p>
+                <p className="text-sm text-muted-foreground">ארבעה שלבים שווים — 4 שניות לכל שלב:</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "שאיפה",  desc: "הכניסי אוויר לאט ובנחת",           bg: "bg-lavender/20"    },
+                    { label: "שהייה",  desc: "החזיקי (ריאות מלאות)",              bg: "bg-terracotta/15"  },
+                    { label: "נשיפה",  desc: "שחררי את האוויר והמתח",             bg: "bg-sage/20"        },
+                    { label: "מנוחה",  desc: "שהייה רגועה לפני הסבב הבא",        bg: "bg-blush/40"       },
+                  ].map(({ label, desc, bg }) => (
+                    <div key={label} className={`${bg} rounded-xl p-3 text-right`}>
+                      <p className="text-warm-brown font-medium text-sm">{label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{desc}</p>
+                    </div>
+                  ))}
                 </div>
-
-                <p className="text-center text-terracotta font-medium text-sm pt-1">
-                  ✦ תמיד אפשר לחזור לפה לתרגל ✦
-                </p>
               </div>
 
               {/* Timer selector */}
@@ -213,48 +306,57 @@ export const BreathingExercise = () => {
               transition={{ duration: 0.4 }}
               className="space-y-8"
             >
-              {/* Breathing circle */}
-              <div className="relative flex items-center justify-center"
-                   style={{ height: 220 }}>
-
-                {/* Outer halo — only shown when not reduceMotion */}
+              {/* Circle */}
+              <div className="relative flex items-center justify-center" style={{ height: 260 }}>
+                {/* Halo */}
                 {!reduceMotion && (
                   <motion.div
-                    className="absolute rounded-full bg-lavender/20"
-                    style={{ width: 140, height: 140 }}
-                    animate={{ scale: CIRCLE_SCALE[currentPhase] * 1.35 }}
+                    className="absolute rounded-full"
+                    style={{
+                      width: 155, height: 155,
+                      background: PHASE_COLORS[currentPhase].gradient,
+                      opacity: 0.2,
+                    }}
+                    animate={{
+                      scale: CIRCLE_SCALE[currentPhase] * 1.4,
+                      background: PHASE_COLORS[currentPhase].gradient,
+                    }}
                     transition={{ duration: TRANSITION_DURATION[currentPhase], ease: "easeInOut" }}
                   />
                 )}
 
-                {/* Main circle */}
+                {/* Main circle — color transitions per phase */}
                 <motion.div
                   className="relative rounded-full flex items-center justify-center"
-                  style={{
-                    width: 140,
-                    height: 140,
-                    background: "linear-gradient(135deg, hsl(270 30% 80%), hsl(15 35% 88%))",
-                    boxShadow: "0 0 50px hsl(270 30% 80% / 0.45)",
+                  style={{ width: 155, height: 155 }}
+                  animate={{
+                    scale:      CIRCLE_SCALE[currentPhase],
+                    background: PHASE_COLORS[currentPhase].gradient,
+                    boxShadow:  `0 0 60px ${PHASE_COLORS[currentPhase].glow}`,
                   }}
-                  animate={{ scale: CIRCLE_SCALE[currentPhase] }}
-                  transition={{ duration: TRANSITION_DURATION[currentPhase], ease: "easeInOut" }}
+                  transition={{
+                    scale:      { duration: TRANSITION_DURATION[currentPhase], ease: "easeInOut" },
+                    background: { duration: 0.8 },
+                    boxShadow:  { duration: 0.8 },
+                  }}
                 >
                   <AnimatePresence mode="wait">
                     <motion.span
-                      key={`${currentPhase}-${msgSlot}`}
+                      key={`${currentPhase}-${cycleIndex}`}
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.35 }}
-                      className="text-warm-brown font-serif text-base font-medium text-center leading-snug px-3"
+                      transition={{ duration: 0.4 }}
+                      className="font-serif text-sm font-medium text-center leading-snug px-4"
+                      style={{ color: "white", textShadow: "0 1px 6px rgba(0,0,0,0.2)" }}
                     >
-                      {PHASE_MESSAGES[currentPhase][msgSlot]}
+                      {cycleText}
                     </motion.span>
                   </AnimatePresence>
                 </motion.div>
               </div>
 
-              {/* Phase name + countdown */}
+              {/* Phase label + countdown */}
               <div className="space-y-1">
                 <AnimatePresence mode="wait">
                   <motion.p
@@ -270,9 +372,9 @@ export const BreathingExercise = () => {
                 </AnimatePresence>
                 <motion.p
                   key={phaseTimeLeft}
-                  initial={{ scale: 1.3, opacity: 0.6 }}
+                  initial={{ scale: 1.2, opacity: 0.7 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.25 }}
+                  transition={{ duration: 0.2 }}
                   className="text-5xl font-mono text-warm-brown"
                 >
                   {phaseTimeLeft}
@@ -280,7 +382,6 @@ export const BreathingExercise = () => {
                 <p className="text-sm text-muted-foreground">שניות</p>
               </div>
 
-              {/* Total time remaining */}
               <p className="text-muted-foreground text-sm font-mono tracking-wide">
                 זמן שנותר: {formatTime(totalTimeLeft)}
               </p>
@@ -318,11 +419,9 @@ export const BreathingExercise = () => {
               <p className="text-terracotta text-sm font-medium">
                 ✦ תמיד אפשר לחזור לפה לתרגל ✦
               </p>
-              <div className="flex justify-center gap-4 flex-wrap">
-                <Button variant="hero" onClick={resetExercise}>
-                  לתרגל שוב
-                </Button>
-              </div>
+              <Button variant="hero" onClick={resetExercise}>
+                לתרגל שוב
+              </Button>
             </motion.div>
           )}
 
